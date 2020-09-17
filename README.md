@@ -1,15 +1,16 @@
 #### FLDS Tools
+
+Two Perl scripts for a cleanup of FLDS raw reads and a determination of both termini of virus genome/segement.
+
 =====
 
-To cite FLDS Tools
-=====
-### Manual
-=====
-  
-  Two Perl scripts for a cleanup of FLDS raw reads and a determination of both termini of virus genome/segement.
+#### Script 1: Cleanup_FLDS_YT200318.pl
 
+Raw Illumina reads are sequentially processed.
 
-##Cleanup_FLDS_YT200318.pl
+=====
+
+## Manual
 
 **Dependencies:**
 
@@ -50,7 +51,7 @@ Cleanup_FLDS_YT200318.pl -lst samplelist.txt -seqDir fastq -lib FLDS -outdir cle
 	 * -lib a kind of library, default FLDS
 	 * -outdir Directory path of output, default cleanup
 
-	# skip a step
+	# Skipping a step in script
      * -trimo  (1)/0 trim adaptor sequences and low-quality sequences, default 1
      * -bowtie2  (1)/0 remove the contamination of control library, default 1
      * -cut  (1)/0 trim cDNA synthesis adaptors, default 1
