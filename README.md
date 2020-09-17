@@ -1,9 +1,9 @@
-####FLDS Tools
+#### FLDS Tools
 =====
 
 To cite FLDS Tools
 =====
-###Manual
+### Manual
 =====
   
   Two Perl scripts for a cleanup of FLDS raw reads and a determination of both termini of virus genome/segement.
@@ -29,21 +29,18 @@ Output: Clean FLDS reads in FASTQ format
 Step 1: Make "sample_list.txt" file.
 
 ```
-rm sample_list1.txt; \
+rm samplelist.txt; \
  for i in ./fastq/*_S*_L001_R1_001.fastq.gz; do j=${i##./*/}; \
    k=${j%%_S*_L001_R1_001.fastq.gz}; echo "$k"; \
-	echo -e "$j\t${j/_R1/_R2}\t$k" >> sample_list1.txt; \
+	echo -e "$j\t${j/_R1/_R2}\t$k" >> samplelist.txt; \
   done
-
 ```
 
 Step 2: Run Cleanup_FLDS_YT200318.pl.
 
 
 ```
-export PATH="$HOME/biotools/rhel6/miniconda3/bin:$PATH"
-$HOME/Desktop/work_CLC/bin/Cleanup_FLDS_YT200318.pl -lst sample_list1.txt -seqDir fastq -lib FLDS -outdir cleanup
-
+Cleanup_FLDS_YT200318.pl -lst samplelist.txt -seqDir fastq -lib FLDS -outdir cleanup
 ```
 
 **Optional parameters:**
