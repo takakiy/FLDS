@@ -64,7 +64,10 @@ Cleanup_FLDS_YT200318.pl -lst samplelist.txt -seqDir fastq -lib FLDS -outdir cle
 **Output:**
  This script generates the output files for each step in the cleanup processes.
 
-
+```
+* ./cleanup/"Sample name"_PP_R1.fq ./cleanup/"Sample name"_PP_R2.fq  ## after excluding PCR duplicates
+* ./cleanup/"Sample name"_SP_R1.fq ./cleanup/"Sample name"_PP_R2.fq  ## after removing rRNA-derived reads
+```
 
 #### Script 2: TermCount_FLDS.pl
 
