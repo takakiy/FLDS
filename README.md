@@ -17,11 +17,13 @@ Raw Illumina reads are sequentially processed.
 	 * SortMeRNA ver. 2.1b
 
 **Config:**
+
 You need to correct for the pipline script "Cleanup_FLDS_YT200318.pl" about paths of the above programs in your environment.
 
 **Execute:**
 
 Input: Paired-end FLDS reads (FASTQ format) in the "fastq" directory
+
 Output: Clean FLDS reads (FASTQ format) in the "cleanup" directory
 
 
