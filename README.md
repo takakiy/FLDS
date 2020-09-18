@@ -68,6 +68,8 @@ Cleanup_FLDS_YT200318.pl -lst samplelist.txt -seqDir fastq -lib FLDS -outdir cle
 * ./cleanup/"Sample name"_SP_R1.fq ./cleanup/"Sample name"_SP_R2.fq  ## after removing rRNA-derived reads
 ```
 
+
+
 ## Script 2: TermCount_FLDS.pl
 
 Terminal ends of viral genome/segments are determined in the candidate sequence for virus genome/segment.
@@ -88,8 +90,9 @@ Terminal ends of viral genome/segments are determined in the candidate sequence 
 
 Step 1: Run TermCount_FLDS.pl
 
-Input: ref.fna (Fasta file containing the candidate sequence for virus genome/segment)
-Input: read_R1.fq read_R2.fq (Paired-end FLDS reads in FASTQ format after the trimmomatic's treatment)
+Reference sequence: ref.fna (Fasta file containing the candidate sequence for virus genome/segment)
+
+Paired-end reads: read_R1.fq read_R2.fq (Paired-end FLDS reads in FASTQ format after the trimmomatic's treatment)
 
 
 ```
