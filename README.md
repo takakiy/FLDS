@@ -1,16 +1,14 @@
-#### FLDS Tools
+# FLDS Tools
 
-Two Perl scripts for a cleanup of FLDS raw reads and a determination of both termini of virus genome/segement.
-
+Two Perl pipline scripts for a cleanup of FLDS raw reads and a determination of both termini of virus genome/segement.
 =====
 
-#### Script 1: Cleanup_FLDS_YT200318.pl
+## Script 1: Cleanup_FLDS_YT200318.pl
 
 Raw Illumina reads are sequentially processed.
-
 =====
 
-## Manual
+### Manual
 =====
 
 **Dependencies:**
@@ -21,7 +19,10 @@ Raw Illumina reads are sequentially processed.
 	 * PRINSEQ ver. 0.20.4
 	 * SortMeRNA ver. 2.1b
 
-**Runbook:**
+**Config:**
+  You need to correct for the pipline script "Cleanup_FLDS_YT200318.pl" about paths of the above programs in your environment.
+
+**Execute:**
 
 Input: Paired-end FLDS reads in FASTQ format
 
@@ -66,14 +67,14 @@ Cleanup_FLDS_YT200318.pl -lst samplelist.txt -seqDir fastq -lib FLDS -outdir cle
 
 ```
 * ./cleanup/"Sample name"_PP_R1.fq ./cleanup/"Sample name"_PP_R2.fq  ## after excluding PCR duplicates
-* ./cleanup/"Sample name"_SP_R1.fq ./cleanup/"Sample name"_PP_R2.fq  ## after removing rRNA-derived reads
+* ./cleanup/"Sample name"_SP_R1.fq ./cleanup/"Sample name"_SP_R2.fq  ## after removing rRNA-derived reads
 ```
 
-#### Script 2: TermCount_FLDS.pl
+## Script 2: TermCount_FLDS.pl
 
 Terminal ends of viral genome/segments are determined in the candidate sequence for virus genome/segment.
 
-## Manual
+### Manual
 =====
 
 **Dependencies:**
@@ -83,15 +84,16 @@ Terminal ends of viral genome/segments are determined in the candidate sequence 
      * samtools ver. 1.9
      * count_term_mapping_sam_v2.pl
 
-**Runbook:**
+**Config**
+  You need to correct for the pipline script "TermCount_FLDS.pl" about paths of the above programs in your environment.
+
+**Execute:**
+
+Step 1: Run TermCount_FLDS.pl
 
 Input: ref.fna (Fasta file containing the candidate sequence for virus genome/segment)
 Input: read_R1.fq read_R2.fq (Paired-end FLDS reads in FASTQ format after the trimmomatic's treatment)
 
-Output: Clean FLDS reads in FASTQ format
-
-
-Step 1: Run TermCount_FLDS.pl
 
 ```
 TermCount_FLDS.pl 
@@ -101,7 +103,10 @@ TermCount_FLDS.pl
 
 **Optional parameters:**
 ```
-# Skipping a step in script
+	 * -name header name used output files
+	 * -tmpdir temporary directory
+
+	# Skipping a step in script
      * -cutadapt  1/0(execute/skip) trim cDNA synthesis adaptors, default 1
      * -mapu2  1/0(execute/skip) mapping using Bowtie2, default 1
 ```
