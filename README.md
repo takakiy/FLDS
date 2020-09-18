@@ -1,15 +1,12 @@
 # FLDS Tools
 
 Two Perl pipline scripts for a cleanup of FLDS raw reads and a determination of both termini of virus genome/segement.
-=====
 
 ## Script 1: Cleanup_FLDS_YT200318.pl
 
 Raw Illumina reads are sequentially processed.
-=====
 
 ### Manual
-=====
 
 **Dependencies:**
 
@@ -20,13 +17,12 @@ Raw Illumina reads are sequentially processed.
 	 * SortMeRNA ver. 2.1b
 
 **Config:**
-  You need to correct for the pipline script "Cleanup_FLDS_YT200318.pl" about paths of the above programs in your environment.
+You need to correct for the pipline script "Cleanup_FLDS_YT200318.pl" about paths of the above programs in your environment.
 
 **Execute:**
 
-Input: Paired-end FLDS reads in FASTQ format
-
-Output: Clean FLDS reads in FASTQ format
+Input: Paired-end FLDS reads (FASTQ format) in the "fastq" directory
+Output: Clean FLDS reads (FASTQ format) in the "cleanup" directory
 
 
 Step 1: Make "sample_list.txt" file.
@@ -63,7 +59,7 @@ Cleanup_FLDS_YT200318.pl -lst samplelist.txt -seqDir fastq -lib FLDS -outdir cle
 ```
 
 **Output:**
- This script generates the output files for each step in the cleanup processes.
+ This pipline script generates the FASTQ files for each step in the cleanup processes.
 
 ```
 * ./cleanup/"Sample name"_PP_R1.fq ./cleanup/"Sample name"_PP_R2.fq  ## after excluding PCR duplicates
@@ -75,7 +71,6 @@ Cleanup_FLDS_YT200318.pl -lst samplelist.txt -seqDir fastq -lib FLDS -outdir cle
 Terminal ends of viral genome/segments are determined in the candidate sequence for virus genome/segment.
 
 ### Manual
-=====
 
 **Dependencies:**
 
