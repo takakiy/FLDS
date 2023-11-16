@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+## version v3
+
 if ((@ARGV == 0) || ($ARGV[0]=~/-h/)) {
 	print "OPTION:
      ## Both
@@ -13,16 +15,17 @@ if ((@ARGV == 0) || ($ARGV[0]=~/-h/)) {
 
 foreach (@ARGV){if (/^\-/){$key= $_} else {push @{$option->{$key}},$_}};
 
+$adapt= exists $option->{-adapt} ? $option->{-adapt}->[0] : "upm";
+
 $terminfo= {};
 if ( exists $option->{-b}) {
-
     $inform= "both";
     ($terminfo)= &create_terminfo($option->{-b}->[0],$inform,$terminfo);
 } elsif (exists $option->{-f} || exists $option->{-r}) {
     $inform= "fwd";
-    ($terminfo)= &create_terminfo($option->{-f}->[0],$inform,$terminfo);
+    ($terminfo)= &create_terminfo($option->{-f}->[0],$inform,$terminfo,$adapt);
     $inform= "rev";
-    ($terminfo)= &create_terminfo($option->{-r}->[0],$inform,$terminfo);
+    ($terminfo)= &create_terminfo($option->{-r}->[0],$inform,$terminfo,$adapt);
 
 }
 
@@ -31,14 +34,14 @@ print "### FINISHED READ SAM\n";
 open (LOG2,">out_countTerm_outlier.txt");
 
 
-($cno)= &output_count_term($terminfo);
+($cno)= &output_count_term($terminfo,$adapt);
 
 print "$cno\n";
 print "### FINISHED CAL OUTLIER\n";
 
 ##=== === === === === === === === === === === === === === === === ===
 sub create_terminfo {
-	my ($infile,$inform,$terminfo)= @_;
+	my ($infile,$inform,$terminfo,$adapt)= @_;
 	my ($info,@line,@item);
  
 	open (IN,"$infile");
@@ -78,12 +81,22 @@ sub create_terminfo {
 			$end= $start+$len-1-$minussum;
             
             if ($inform eq "both") {
-                $terminfo->{$cont}->{start}->{$start}++;
-                $terminfo->{$cont}->{end}->{$end}++;
+                $terminfo->{$cont}->{posit}->{$start}++;
+                $terminfo->{$cont}->{negat}->{$end}++;
             } elsif ($inform eq "fwd") {
-                $terminfo->{$cont}->{start}->{$start}++;
+                
+                if ($adapt eq "upm") {
+                    $terminfo->{$cont}->{posit}->{$start}++;
+                } elsif ($adapt eq "u2") {
+                     $terminfo->{$cont}->{posit}->{$end}++;
+                }
             } elsif ($inform eq "rev") {
-                $terminfo->{$cont}->{end}->{$end}++;
+                
+                if ($adapt eq "upm") {
+                    $terminfo->{$cont}->{negat}->{$end}++;
+                } elsif ($adapt eq "u2") {
+                    $terminfo->{$cont}->{negat}->{$start}++;
+                }
             }
 		}
 	}
@@ -94,76 +107,101 @@ sub create_terminfo {
 
 
 sub output_count_term {
-	my ($terminfo)= @_;
+	my ($terminfo,$adapt)= @_;
     my (@titles);
     
 	open (OUT,">out_countTerm_summary.txt");
     
-    @titles= qw/cont conlen/;
-    push @titles, qw/1st_st_pos 1st_st_cnt 1st_st_pval 2nd_st_pos 2nd_st_cnt 2nd_st_pval/;
-    push @titles, qw/t_start av_start max_st_pos max_st_cnt/;
-    push @titles, qw/1st_ed_pos 1st_ed_cnt 1st_ed_pval 2nd_ed_pos 2nd_ed_cnt 2nd_ed_pval/;
-    push @titles, qw/t_end av_end max_end_pos max_end_cnt/;
+    @titles= qw/adapt cont conlen/;
+    push @titles, qw/1st_st_pos 1st_st_cnt 1st_st_pval 2nd_st_pos 2nd_st_cnt 2nd_st_pval 3rd_st_pos 3rd_st_cnt 3rd_st_pval post_num/;
+    push @titles, qw/1st_ed_pos 1st_ed_cnt 1st_ed_pval 2nd_ed_pos 2nd_ed_cnt 2nd_ed_pval 3rd_ed_pos 3rd_ed_cnt 3rd_ed_pval post_num/;
 	print OUT (join "\t",@titles)."\n";
     
 	open (LOG,">out_countTerm_list.txt");
-    print LOG (join "\t",qw(cont clen loc count type))."\n";
+    print LOG (join "\t",qw(adapt cont clen loc count type))."\n";
     
     @conts= (sort keys %{$terminfo});
     $contnum= @conts;
-
+    
 	$cno= 0;
 	foreach $cont ( sort keys %{$terminfo} ) {
 		$cno++;
 		$conlen= $terminfo->{$cont}->{conlen};
-        @sumone= ($cont,$conlen);
+        @sumone= ($adapt,$cont,$conlen);
         
-## START
-        foreach $post (sort{$a<=>$b} keys %{$terminfo->{$cont}->{start}} ) {
-            $countone= $terminfo->{$cont}->{start}->{$post};
-            print LOG "$cont\t$conlen\t$post\t$countone\tstart\n";
+        foreach $post (sort{$a<=>$b} keys %{$terminfo->{$cont}->{posit}} ) {
+            $countone= $terminfo->{$cont}->{posit}->{$post};
+            print LOG "$adapt\t$cont\t$conlen\t$post\t$countone\tposit\n";
+        }
+ 
+        foreach $post (sort{$a<=>$b} keys %{$terminfo->{$cont}->{negat}} ) {
+            $countone= $terminfo->{$cont}->{negat}->{$post};
+            print LOG "$adapt\t$cont\t$conlen\t$post\t$countone\tnegat\n";
         }
 
-        if (keys %{$terminfo->{$cont}->{start}} > 4) {
-            
-            ($outlier_st,$stats)=&calculate_Smirnov_Grubbs_test($terminfo->{$cont},"start");
-            print LOG2 (join "\t",("start",$cont,$conlen,@$_))."\n" foreach (@$outlier_st);
 
-            if (@$outlier_st > 1) {
-                push @sumone,@{$$outlier_st[0]},@{$$outlier_st[1]};
-            } else {
-                push @sumone,@{$$outlier_st[0]},"nd","nd","nd";
-            }
-            push @sumone,@$stats;
-            
-		} else {
-			push @sumone,"nd","nd","nd","nd","nd","nd","nd","nd","nd","nd";
-		}
+## NEGATIVE ( UPM: 3'-TERM  U2: 5'-TERM)
+
+        $min_postnum=3;
         
-## END
-        foreach $post (sort{$a<=>$b} keys %{$terminfo->{$cont}->{end}} ) {
-            $countone= $terminfo->{$cont}->{end}->{$post};
-            print LOG "$cont\t$conlen\t$post\t$countone\tend\n";
-        }
+## 5'-TERM (UPM: positive U2: negative)
+        my($outlier_st,$stats_st,$cc_st);
+        
+        $strandx= $adapt eq "upm" ? "posit" : "negat";
+        @postx= sort{$a<=>$b} keys %{$terminfo->{$cont}->{$strandx}};
+        $postx_num=@postx;
+        
+        ## SELCT >= 3 COUNT
+#        @targetpostx=();
+#        @targetpostx= grep{$terminfo->{$cont}->{$strandx}->{$_} > 2 }@postx;
 
-		if (keys %{$terminfo->{$cont}->{end}} > 4) {
+        push @sumone,"nd","nd","nd","nd","nd","nd","nd","nd","nd",$postx_num;
+        if ($postx_num >= $min_postnum) {
+            ($outlier_st,$stats_st)=&calculate_Smirnov_Grubbs_test($terminfo->{$cont},[@postx],"start",$strandx);
+            print LOG2 (join "\t",($adapt,$strandx,$cont,$conlen,@$_))."\n" foreach (@$outlier_st);
 
-            ($outlier_ed,$stats)=&calculate_Smirnov_Grubbs_test($terminfo->{$cont},"end");
-            print LOG2 (join "\t",("end",$cont,$conlen,@$_))."\n" foreach (@$outlier_ed);
-            
-            if (@$outlier_ed > 1) {
-                push @sumone,@{$$outlier_ed[0]},@{$$outlier_ed[1]};
-            } else {
-                push @sumone,@{$$outlier_ed[0]},"nd","nd","nd";
+            @sumone[3..11]= (@{$$outlier_st[0]},@{$$outlier_st[1]},@{$$outlier_st[2]});
+
+        } else {
+            if ($postx_num > 0) {
+                @sumone[3..5]= ($postx[0],$terminfo->{$cont}->{$strandx}->{$postx[0]},"na");
+                if ($postx_num > 1) {
+                    @sumone[6..8]= ($postx[1],$terminfo->{$cont}->{$strandx}->{$postx[1]},"na");
+                }
             }
+                
+        }
+## 3'-TERM (UPM: negative U2: positive)
+        my($outlier_ed,$stats_ed,$cc_ed);
+        $strandy= $adapt eq "upm" ? "negat" : "posit";
+        @posty= sort{$b<=>$a} keys %{$terminfo->{$cont}->{$strandy}};
+        $posty_num=@posty;
+        
+        ## SELCT >= 3 COUNT
+#        @targetposty=();
+#        @targetposty= grep{$terminfo->{$cont}->{$strandy}->{$_} > 2 }@posty;
 
-            push @sumone,@$stats;
+        push @sumone,"nd","nd","nd","nd","nd","nd","nd","nd","nd",$posty_num;
+        if ($posty_num >= $min_postnum) {
+ 
+            ($outlier_ed,$stats_ed)=&calculate_Smirnov_Grubbs_test($terminfo->{$cont},[@posty],"end",$strandy);
+            print LOG2 (join "\t",($adapt,$strandy,$cont,$conlen,@$_))."\n" foreach (@$outlier_ed);
+            
+            @sumone[13..21]= (@{$$outlier_ed[0]},@{$$outlier_ed[1]},@{$$outlier_ed[2]});
 
-		} else {
-            push @sumone,"nd","nd","nd","nd","nd","nd","nd","nd","nd","nd";
-		}
-
-		print OUT (join "\t",@sumone)."\n";
+        } else {
+            if ($posty_num > 0) {
+                @sumone[13..15]= ($posty[0],$terminfo->{$cont}->{$strandy}->{$posty[0]},"na");
+                if ($posty_num > 1) {
+                    @sumone[16..18]= ($posty[1],$terminfo->{$cont}->{$strandy}->{$posty[1]},"na");
+                }
+            }
+        }
+ 
+#        print "#### $adapt $postx_num $posty_num\n";
+        
+        
+		print OUT (join "\t",(@sumone))."\n";
         
         print "$cno / $contnum $cont\n";
         
@@ -174,25 +212,24 @@ sub output_count_term {
 }
 
 sub calculate_Smirnov_Grubbs_test {
-    my ($postinfo,$order)= @_;
-    my (@counts,@posts,@outlier,$postone,$SG_values,$summary_SG,$pval);
+    my ($postinfo,$post_arr,$term,$strand)= @_;
+    my (@posts,$sum,$post_num,$max_post,$max_count);
+    my ($postone,$countone,$ave,$cov,$std);
+    my (@stats,@outlier,@counts,$SG_values,$bb,$cc,$summary_SG,$pval);
 
-
-# print "## $order\n";
-    
-    if ($order eq "start") {
-        @posts= sort{$a<=>$b} keys %{$postinfo->{$order}};
-    } elsif ($order eq "end") {
-        @posts= sort{$b<=>$a} keys %{$postinfo->{$order}};
+    if ($term eq "start") {
+            @posts= sort{$a<=>$b}@$post_arr;
+    } elsif ($term eq "end") {
+            @posts= sort{$b<=>$a}@$post_arr;
     }
 
 ### CAL STATICS
     ($sum,$post_num)= (0,0);
     ($max_post,$max_count)=(0,0);
     
-    foreach $postone (@posts) {
+    foreach $postone (@$post_arr) {
         $post_num++;
-        $countone= $postinfo->{$order}->{$postone};
+        $countone= $postinfo->{$strand}->{$postone};
 
         $sum+= $countone;
         if ($countone > $max_count) {
@@ -201,8 +238,8 @@ sub calculate_Smirnov_Grubbs_test {
     }
     $ave= sprintf("%.1f",$sum/$post_num);
     $cov= 0;
-    foreach $postone (@posts) {
-        $countone= $postinfo->{$order}->{$postone};
+    foreach $postone (@$post_arr) {
+        $countone= $postinfo->{$strand}->{$postone};
         $cov+= ($countone-$ave)**2;
     }
     $std= sprintf("%.2f",sqrt($cov/$post_num));
@@ -212,46 +249,59 @@ sub calculate_Smirnov_Grubbs_test {
 ### CAL OUTLIER
     
     @outlier= ();
-    @counts= values %{$postinfo->{$order}};
+    @counts= values %{$postinfo->{$strand}};
     $SG_values= "c(".(join ",",@counts).")";
 
+    
+      ###  FIRST POSIT & SIGNIFICANT POSIT
+    
     $bb=0;
     $cc=0;
+    @effect_post=();
     foreach $postone (@posts) {
+        $countone= $postinfo->{$strand}->{$postone};
+
+        next if ($countone < 3);
+        push @effect_post,$postone;
+        
         $bb++;
-        $countone= $postinfo->{$order}->{$postone};
- #print "$postone $countone $ave $std\n";
+
         # FIRST POST
-        if ($bb == 1) {
+        if ($bb <= 2) {
             ($summary_SG)= &Smirnov_Grubbs_test($SG_values,$countone);
             $pval= $$summary_SG[5];
-            
             push @outlier,[$postone,$countone,$pval];
-            if ($pval ne "NA") {
-                $cc++ if ($pval < 5e-2);
-            }
-            next;
-        } else {
-            
-            ### SKIP IN (COUNT-AVERAGE) > STD
-            
-            $pval= 1;
-            if (abs($countone - $ave) > $std ) {
-                ($summary_SG)= &Smirnov_Grubbs_test($SG_values,$countone);
-                $pval= $$summary_SG[5];
+            $cc++;
 
-            }
-            
+        } else {
+            ($summary_SG)= &Smirnov_Grubbs_test($SG_values,$countone);
+            $pval= $$summary_SG[5];
+            if ($pval ne "NA") {
             ## OUTLIER POST ( P-val < 0.05)
-            if ($pval < 5e-2) {
-                push @outlier,[$postone,$countone,$pval];
-                $cc++;
-                last if ($cc > 2);
-            
+                if ($pval < 5e-2) {
+                    push @outlier,[$postone,$countone,$pval];
+                    $cc++;
+                    last if ($cc >= 3);
+                }
             }
         }
-
     }
+    
+#    print "$strand $_ $postinfo->{$strand}->{$_}\n" foreach (@posts);
+
+    if ($cc == 2) {
+        if (@effect_post > 2) {
+            push @outlier,[$effect_post[2],$postinfo->{$strand}->{$effect_post[2]},"nd"];
+        } else {
+            push @outlier,["nd","nd","nd"];
+        }
+    } elsif ($cc == 1) {
+        push @outlier,["nd","nd","nd"],["nd","nd","nd"];
+    } elsif ($cc == 0) {
+        push @outlier,[$posts[0],$postinfo->{$strand}->{$posts[0]},"na"],
+        ["nd","nd","nd"],["nd","nd","nd"];
+    }
+    
     
     return ([@outlier],[@stats]);
 
